@@ -1,0 +1,46 @@
+import { Settings } from 'lucide-react';
+import { FIELD } from '../../lib/fieldTypes';
+
+const siteSettings = {
+  key: "site_settings",
+  label: "Configuración del sitio",
+  icon: Settings,
+  group: "Config y personas",
+  path: "/config/site-settings",
+  orderBy: "id",
+  ascending: true,
+  imageField: "logo_url",
+  list: ["site_name", "public_url", "status_level", "maintenance_mode"],
+  columns: [
+    { key: "id", label: "ID", type: FIELD.TEXT, required: true },
+    { key: "site_name", label: "Nombre del sitio", type: FIELD.TEXT, required: true },
+    { key: "public_url", label: "URL pública", type: FIELD.TEXT },
+    { key: "support_email", label: "Correo de soporte", type: FIELD.TEXT },
+    { key: "alliances_email", label: "Correo de alianzas", type: FIELD.TEXT },
+    { key: "phone", label: "Teléfono", type: FIELD.TEXT },
+    { key: "whatsapp", label: "WhatsApp", type: FIELD.TEXT },
+    { key: "facebook_url", label: "Facebook", type: FIELD.TEXT },
+    { key: "instagram_url", label: "Instagram", type: FIELD.TEXT },
+    { key: "tiktok_url", label: "TikTok", type: FIELD.TEXT },
+    { key: "youtube_url", label: "YouTube", type: FIELD.TEXT },
+    { key: "logo_url", label: "Logo", type: FIELD.IMAGE, bucket: "branding" },
+    { key: "logo_white_url", label: "Logo blanco", type: FIELD.IMAGE, bucket: "branding" },
+    { key: "favicon_url", label: "Favicon", type: FIELD.IMAGE, bucket: "branding" },
+    { key: "og_image", label: "Imagen Open Graph", type: FIELD.IMAGE, bucket: "branding" },
+    { key: "hero_image_url", label: "Imagen de fondo del hero (Inicio)", type: FIELD.IMAGE, bucket: "home" },
+    { key: "hero_video_desktop_url", label: "Video del hero (opcional, enlace directo a .mp4)", type: FIELD.TEXT },
+    { key: "default_language", label: "Idioma por defecto", type: FIELD.TEXT },
+    { key: "ga4_id", label: "Google Analytics 4 ID", type: FIELD.TEXT },
+    { key: "meta_pixel_id", label: "Meta Pixel ID", type: FIELD.TEXT },
+    { key: "clarity_id", label: "Microsoft Clarity ID", type: FIELD.TEXT },
+    { key: "seo_title", label: "Título SEO", type: FIELD.TEXT },
+    { key: "seo_description", label: "Descripción SEO", type: FIELD.TEXTAREA },
+    { key: "status_banner", label: "Banner de estado", type: FIELD.TEXT },
+    { key: "status_level", label: "Nivel de estado", type: FIELD.SELECT, options: ["normal", "notice", "warning", "urgent"] },
+    { key: "pwa_enabled", label: "PWA habilitada", type: FIELD.BOOL },
+    { key: "maintenance_mode", label: "Modo mantenimiento", type: FIELD.BOOL },
+    { key: "metadata", label: "Metadata (JSON)", type: FIELD.JSON },
+  ],
+};
+
+export default siteSettings;
