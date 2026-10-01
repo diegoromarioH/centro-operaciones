@@ -42,10 +42,10 @@ function useTableData(table) {
 // Componente único que renderiza el CRUD completo de una tabla, dirigido por
 // la configuración (table). Todas las páginas en src/pages/ son una línea de
 // código que le pasan su config a este mismo componente.
-export default function DataTable({ table }) {
+export default function DataTable({ table, rowFilter, compareRows, initialRecord }) {
   const { rows, loading, error, reload } = useTableData(table);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState(undefined); // undefined = cerrado, null = nuevo
+  const [editing, setEditing] = useState(initialRecord); // undefined = cerrado, null = nuevo
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [fkOptions, setFkOptions] = useState({});
   const [saving, setSaving] = useState(false);
@@ -78,10 +78,14 @@ export default function DataTable({ table }) {
   }, [table.key]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((r) => table.list.some((k) => String(r[k] ?? '').toLowerCase().includes(q)));
-  }, [rows, search, table.list]);
+    const q = search.trim().toLowerCase();
+    const result = rows.filter(r => (!rowFilter || rowFilter(r)) && (!q || table.list.some(k => {
+      const field = columnFor(table, k);
+      const value = field.type === FIELD.FK ? (fkOptions[k] || []).find(o => o.id === r[k])?.label || r[k] : r[k];
+      return String(value ?? '').toLowerCase().includes(q);
+    })));
+    return compareRows ? result.sort(compareRows) : result;
+  }, [rows, search, table.list, rowFilter, compareRows, fkOptions]);
 
   async function handleSave(rawPayload) {
     if (table.readOnly) return;
@@ -103,7 +107,7 @@ export default function DataTable({ table }) {
   }
 
   async function handleDelete(row) {
-    if (table.readOnly) return;
+    if (table.readOnly || table.noDelete) return;
     const { error } = await supabase.from(table.key).delete().eq('id', row.id);
     if (error) setToast({ type: 'error', msg: error.message });
     else {
@@ -213,7 +217,7 @@ export default function DataTable({ table }) {
                       <button className="ro-icon-btn" title={table.readOnly ? "Ver detalle" : "Editar"} onClick={() => setEditing(row)}>
                         {table.readOnly ? <Eye size={15} /> : <Pencil size={15} />}
                       </button>
-                      {!table.readOnly && <button
+                      {!table.readOnly && !table.noDelete && <button
                         className="ro-icon-btn ro-icon-btn-danger"
                         title="Eliminar"
                         onClick={() => setConfirmDelete(row)}

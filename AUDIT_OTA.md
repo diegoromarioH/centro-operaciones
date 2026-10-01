@@ -71,3 +71,28 @@ Esta base permite gestión de fichas, habitaciones, responsables y actividad por
 3. Usar **Dar acceso** para crear o vincular la cuenta del dueño a ese hotel.
 4. El dueño entra al centro con su cuenta y accede automáticamente a **Mi hotel**.
 5. Un mismo dueño puede tener varios hoteles asignados. El superpanel mantiene la publicación y el control administrativo.
+
+
+## Segunda entrega — navieras, reservas y cobros manuales
+
+Cambios preparados en la misma propuesta, todavía sin desplegar:
+
+- Horarios ordenados por nombre de naviera, nombre de ruta y salida, con filtros independientes. El formulario incorpora `operator_id`. No se inventan relaciones de los horarios históricos: quedan «Sin asignar» hasta vincularlos.
+- Terminología de interfaz: anfitrión y alojamiento. Se mantienen rutas y nombres técnicos anteriores para conservar enlaces.
+- Registro de reservas de alojamiento con huésped, fechas, importe, pago del huésped y porcentaje de comisión por reserva. El formulario de esta entrega está enfocado a alojamientos. No se establece un porcentaje comercial universal.
+- Acción desde la solicitud que abre la reserva existente o prepara un registro vinculado. El registro se guarda cuando el operador completa el formulario; abrir WhatsApp no crea una reserva automáticamente.
+- Reserva sin borrado físico. SQL preparado para calcular la comisión, validar los datos y evitar dos reservas nuevas para una solicitud mediante bloqueo del registro de solicitud.
+- Nueva pantalla `/finanzas/collections`: cuentas por cobrar vinculadas a reservas completadas, vencimiento, abonos manuales con referencia y método, saldo parcial/pagado/vencido, anulación con motivo, historial y exportación CSV por alojamiento. Los totales se calculan por moneda, sin conversiones.
+- El cobro se emite explícitamente por el administrador al completar la estancia. El saldo se calcula por abonos confirmados, no por el pago del huésped. La consulta financiera recupera páginas completas para evitar presentar los primeros 1.000 registros como un total global.
+- `database/ota_finance.sql` añade tablas con RLS administrativa, importes calculados desde la reserva, bloqueo de cobros duplicados y abonos superiores al saldo, principal inmutable y autor/fecha de creación y anulación. Las reservas facturadas quedan congeladas salvo el estado de pago del huésped. La corrección/reemisión de un cobro anulado y las notas de crédito requieren un flujo posterior; no se permite una edición silenciosa de su base.
+
+Verificación de esta segunda entrega:
+
+- 4 pruebas Node aprobadas: acceso, campos administrativos, abonos/reversiones y separación de monedas.
+- `tests/ota_finance.sql` preparado, pero NO ejecutado: la revisión automática rechazó la transacción de prueba sobre producción, aun con `ROLLBACK`, por alcance de permisos y riesgo de bloqueos. No se modificó Supabase.
+- `npm ci` bloqueado por HTTP 403 del registro npm; `npm run build` no pudo iniciar por falta de Vite. La compilación aprobada en la primera auditoría no valida estas nuevas pantallas.
+- No se realizaron pruebas de navegador ni se certificó el flujo completo de nuevas reservas y cobros.
+
+Despliegue: aplicar primero `ota_access.sql`, luego `ota_finance.sql` en transacción, ejecutar pruebas en un entorno aislado y compilar/probar el frontend antes de publicar. Asignar las navieras a horarios históricos y confirmar el porcentaje comercial y la política de cancelación con cada anfitrión. No aplicar una comisión retrospectiva sin revisar el acuerdo.
+
+No se conecta una pasarela ni se envían mensajes. Para registrar también reservas creadas fuera de este centro (landing, panel del anfitrión, llamadas o WhatsApp), hace falta integrar esos puntos de entrada con el mismo registro. Esta propuesta habilita el flujo manual del superpanel; no afirma que los otros canales ya lo cumplan. El panel del anfitrión continúa consultando las reservas y no tiene acceso al libro interno de cobros. Comprobantes adjuntos, conciliación bancaria, comisiones de cancelación, suscripciones y PDF de facturación quedan pendientes.

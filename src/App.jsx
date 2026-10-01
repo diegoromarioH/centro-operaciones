@@ -7,6 +7,7 @@ import { panelAccess } from './auth/access';
 import { supabase } from './lib/supabaseClient';
 import HotelProfilesPage from './pages/HotelProfilesPage';
 import HotelPanel from './pages/HotelPanel';
+import CommissionCollectionsPage from './pages/CommissionCollectionsPage';
 import AccountPage from './pages/AccountPage';
 import LoginPage from './auth/LoginPage';
 import Sidebar from './components/Sidebar';
@@ -65,7 +66,7 @@ function LoadingScreen() {
 function CurrentTopbar({ onOpenSidebar, userEmail }) {
   const location = useLocation();
   const table = TABLES.find((t) => t.path === location.pathname);
-  const title = location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de hoteles' : table ? table.label : 'Inicio';
+  const title = location.pathname === '/finanzas/collections' ? 'Comisiones y cobros' : location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de alojamientos' : table ? table.label : 'Inicio';
   const subtitle = table
     ? table.readOnly
       ? 'Registro de solo lectura'
@@ -89,7 +90,7 @@ export default function App() {
     <button className="ro-btn ro-btn-ghost" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
   </div></div>;
   if (access === 'host') return <div className="ro-owner-app">
-    <Topbar title="Panel de mi hotel" subtitle="Reserva Ometepe" userEmail={session.user.email} />
+    <Topbar title="Panel de mi alojamiento" subtitle="Reserva Ometepe" userEmail={session.user.email} />
     <main className="ro-content"><Routes>
       <Route path="/cuenta" element={<AccountPage />} />
       <Route path="/mi-hotel" element={<HotelPanel key={session.user.id} userId={session.user.id} />} />
@@ -139,6 +140,7 @@ export default function App() {
             <Route path="/config/profiles" element={<ProfilesPage />} />
             <Route path="/config/site-settings" element={<SiteSettingsPage />} />
             <Route path="/config/contact-messages" element={<ContactMessagesPage />} />
+            <Route path="/finanzas/collections" element={<CommissionCollectionsPage />} />
             <Route path="/finanzas/transactions" element={<FinanceTransactionsPage />} />
             <Route path="/finanzas/automation-rules" element={<AutomationRulesPage />} />
             <Route path="/finanzas/automation-logs" element={<AutomationLogsPage />} />

@@ -48,7 +48,7 @@ export default function HostAccountsPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setResult({ ok: true, tempPassword: data.temp_password, email: f.email, existingAccount: data.existing_account });
-      setToast({ type: 'success', msg: data.existing_account ? 'Cuenta existente vinculada al hotel.' : 'Cuenta de dueño creada.' });
+      setToast({ type: 'success', msg: data.existing_account ? 'Cuenta existente vinculada al alojamiento.' : 'Cuenta de anfitrión creada.' });
       setF({ display_name: '', email: '', phone: '', whatsapp: '', accommodation_id: '' });
       reload();
     } catch (err) {
@@ -70,14 +70,14 @@ export default function HostAccountsPage() {
       {loadError && <div className="ro-alert" role="alert">{loadError}<button className="ro-btn ro-btn-ghost" onClick={reload}>Reintentar</button></div>}
       <div className="ro-host-form-card">
         <h3>
-          <KeyRound size={17} /> Dar acceso a un dueño de alojamiento
+          <KeyRound size={17} /> Dar acceso a un anfitrión
         </h3>
         <p className="ro-req-empty" style={{ textAlign: 'left', marginBottom: 16 }}>
-          Crea o vincula una cuenta para que el dueño de un alojamiento inicie sesión en el portal de dueños y administre su
+          Crea o vincula una cuenta para que el anfitrión inicie sesión en el panel de anfitriones y administre su
           propia ficha y habitaciones — no puede ver ni tocar nada más del sistema.
         </p>
         <form onSubmit={submit} className="ro-host-form">
-          <input required placeholder="Nombre del dueño" value={f.display_name} onChange={(e) => up('display_name', e.target.value)} />
+          <input required placeholder="Nombre del anfitrión" value={f.display_name} onChange={(e) => up('display_name', e.target.value)} />
           <input required type="email" placeholder="Correo (con esto inicia sesión)" value={f.email} onChange={(e) => up('email', e.target.value)} />
           <input placeholder="Teléfono" value={f.phone} onChange={(e) => up('phone', e.target.value)} />
           <input placeholder="WhatsApp" value={f.whatsapp} onChange={(e) => up('whatsapp', e.target.value)} />
@@ -97,8 +97,8 @@ export default function HostAccountsPage() {
 
         {result?.ok && (
           <div className="ro-host-result ok">
-            {result.existingAccount ? <p>El hotel quedó vinculado a <b>{result.email}</b>. El dueño puede ingresar con su contraseña actual.</p> : <><p>
-              Cuenta creada para <b>{result.email}</b>. Comparte esta contraseña temporal con el dueño (no se vuelve a
+            {result.existingAccount ? <p>El alojamiento quedó vinculado a <b>{result.email}</b>. El anfitrión puede ingresar con su contraseña actual.</p> : <><p>
+              Cuenta creada para <b>{result.email}</b>. Comparte esta contraseña temporal con el anfitrión (no se vuelve a
               mostrar):
             </p>
             <div className="ro-host-password">
@@ -120,7 +120,7 @@ export default function HostAccountsPage() {
           <Loader2 size={18} className="ro-spin" /> Cargando…
         </div>
       ) : linked.length === 0 ? (
-        <div className="ro-empty">Todavía no has creado ningún acceso de dueño.</div>
+        <div className="ro-empty">Todavía no has creado ningún acceso de anfitrión.</div>
       ) : (
         <div className="ro-table-wrap">
           <table className="ro-table">

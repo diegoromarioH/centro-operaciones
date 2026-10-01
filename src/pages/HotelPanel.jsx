@@ -46,11 +46,11 @@ export default function HotelPanel({ userId }) {
     finally { setSaving(false); }
   }
   return <div>
-    <div className="ro-panel-toolbar"><h2>Mi hotel</h2><button className="ro-btn ro-btn-ghost" onClick={() => setVersion(v => v + 1)}>Actualizar</button></div>
+    <div className="ro-panel-toolbar"><h2>Mi alojamiento</h2><button className="ro-btn ro-btn-ghost" onClick={() => setVersion(v => v + 1)}>Actualizar</button></div>
     {error && <div className="ro-alert" role="alert">{error}</div>}{message && <p role="status">{message}</p>}
-    {loading ? <div className="ro-empty">Cargando tus alojamientos…</div> : !hotels.length ? <div className="ro-panel ro-empty">Tu cuenta todavía no tiene un hotel asignado. Contacta al administrador de Reserva Ometepe.</div> : <>
+    {loading ? <div className="ro-empty">Cargando tus alojamientos…</div> : !hotels.length ? <div className="ro-panel ro-empty">Tu cuenta todavía no tiene un alojamiento asignado. Contacta al administrador de Reserva Ometepe.</div> : <>
       <label htmlFor="owner-hotel">Alojamiento</label><select id="owner-hotel" className="ro-input" value={selected} onChange={e => { setSelected(e.target.value); setMessage(''); }}>{hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
-      <p>{hotel?.active ? 'Tu hotel está publicado.' : 'Tu hotel está oculto. El administrador controla su publicación.'}</p>
+      <p>{hotel?.active ? 'Tu alojamiento está publicado.' : 'Tu alojamiento está oculto. El administrador controla su publicación.'}</p>
       {hotel && <><AccommodationForm key={hotel.id} table={ownerTable} record={hotel} saving={saving} onSave={save} /><AccommodationRoomsPanel key={hotel.id + '-rooms'} accommodationId={hotel.id} accommodationName={hotel.name} /><HotelActivity hotel={hotel} /></>}
     </>}
   </div>;
