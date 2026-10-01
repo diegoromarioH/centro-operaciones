@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Download, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { AlertCircle, Eye, Download, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { FIELD } from '../lib/fieldTypes';
 import { fmtCell, columnFor } from '../utils/format';
@@ -84,16 +84,17 @@ export default function DataTable({ table }) {
   }, [rows, search, table.list]);
 
   async function handleSave(rawPayload) {
+    if (table.readOnly) return;
     setSaving(true);
     const payload = typeof table.deriveOnSave === 'function' ? table.deriveOnSave(rawPayload) : rawPayload;
     const isNew = !editing?.id;
     const query = isNew
       ? supabase.from(table.key).insert(payload).select()
       : supabase.from(table.key).update(payload).eq('id', editing.id).select();
-    const { error } = await query;
+    const { data, error } = await query;
     setSaving(false);
-    if (error) {
-      setToast({ type: 'error', msg: error.message });
+    if (error || !data?.length) {
+      setToast({ type: 'error', msg: error?.message || 'El registro no se guardó. Revisa tus permisos.' });
     } else {
       setToast({ type: 'success', msg: isNew ? 'Registro creado.' : 'Cambios guardados.' });
       setEditing(undefined);
@@ -102,6 +103,7 @@ export default function DataTable({ table }) {
   }
 
   async function handleDelete(row) {
+    if (table.readOnly) return;
     const { error } = await supabase.from(table.key).delete().eq('id', row.id);
     if (error) setToast({ type: 'error', msg: error.message });
     else {
@@ -145,8 +147,7 @@ export default function DataTable({ table }) {
 
       {table.readOnly && (
         <div className="ro-readonly-banner">
-          Esta tabla la llena la propia aplicación automáticamente. Aquí solo puedes consultarla y borrar registros
-          antiguos.
+          Esta tabla es de solo lectura. Puedes consultar sus registros y exportarlos.
         </div>
       )}
 
@@ -209,16 +210,16 @@ export default function DataTable({ table }) {
                       );
                     })}
                     <td className="ro-actions-col" onClick={(e) => e.stopPropagation()}>
-                      <button className="ro-icon-btn" title="Editar" onClick={() => setEditing(row)}>
-                        <Pencil size={15} />
+                      <button className="ro-icon-btn" title={table.readOnly ? "Ver detalle" : "Editar"} onClick={() => setEditing(row)}>
+                        {table.readOnly ? <Eye size={15} /> : <Pencil size={15} />}
                       </button>
-                      <button
+                      {!table.readOnly && <button
                         className="ro-icon-btn ro-icon-btn-danger"
                         title="Eliminar"
                         onClick={() => setConfirmDelete(row)}
                       >
                         <Trash2 size={15} />
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}
@@ -227,7 +228,11 @@ export default function DataTable({ table }) {
           </div>
         ))}
 
-      {editing !== undefined && (
+      {editing !== undefined && table.readOnly && <div className="ro-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) setEditing(undefined); }}>
+        <div className="ro-modal"><div className="ro-modal-header"><h3>{table.label}</h3><button className="ro-icon-btn" title="Cerrar" onClick={() => setEditing(undefined)}><X size={18} /></button></div>
+        <div className="ro-modal-body">{table.columns.map(c => <div className="ro-field" key={c.key}><strong>{c.label}</strong><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{typeof editing[c.key] === 'object' ? JSON.stringify(editing[c.key], null, 2) : String(editing[c.key] ?? '—')}</pre></div>)}</div></div>
+      </div>}
+      {editing !== undefined && !table.readOnly && (
         <EditForm
           key={editing?.id || 'new'}
           table={table}

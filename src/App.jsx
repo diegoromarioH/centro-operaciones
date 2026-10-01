@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useSession } from './auth/useSession';
+import { useProfile } from './auth/useProfile';
+import { panelAccess } from './auth/access';
+import { supabase } from './lib/supabaseClient';
+import HotelProfilesPage from './pages/HotelProfilesPage';
+import HotelPanel from './pages/HotelPanel';
+import AccountPage from './pages/AccountPage';
 import LoginPage from './auth/LoginPage';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -10,6 +16,7 @@ import { TABLES } from './config/tables';
 import Dashboard from './pages/Dashboard';
 import AccommodationsPage from './pages/AccommodationsPage';
 import HostsPage from './pages/HostsPage';
+import RoomsPage from './pages/RoomsPage';
 import HostAccountsPage from './pages/HostAccountsPage';
 import AccommodationHostsPage from './pages/AccommodationHostsPage';
 import AccommodationPoliciesPage from './pages/AccommodationPoliciesPage';
@@ -58,7 +65,7 @@ function LoadingScreen() {
 function CurrentTopbar({ onOpenSidebar, userEmail }) {
   const location = useLocation();
   const table = TABLES.find((t) => t.path === location.pathname);
-  const title = table ? table.label : 'Inicio';
+  const title = location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de hoteles' : table ? table.label : 'Inicio';
   const subtitle = table
     ? table.readOnly
       ? 'Registro de solo lectura'
@@ -70,9 +77,25 @@ function CurrentTopbar({ onOpenSidebar, userEmail }) {
 export default function App() {
   const session = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const profileState = useProfile(session);
 
   if (session === undefined) return <LoadingScreen />;
   if (!session) return <LoginPage />;
+  if (profileState.loading) return <LoadingScreen />;
+  const access = panelAccess(profileState.profile);
+  if (profileState.error || access === 'denied') return <div className="ro-login-screen"><div className="ro-login-card">
+    <h1>Acceso al panel</h1><p role="alert">{profileState.error || 'Tu cuenta está inactiva o no tiene permisos para este panel.'}</p>
+    <button className="ro-btn ro-btn-primary" onClick={profileState.retry}>Reintentar</button>
+    <button className="ro-btn ro-btn-ghost" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
+  </div></div>;
+  if (access === 'host') return <div className="ro-owner-app">
+    <Topbar title="Panel de mi hotel" subtitle="Reserva Ometepe" userEmail={session.user.email} />
+    <main className="ro-content"><Routes>
+      <Route path="/cuenta" element={<AccountPage />} />
+      <Route path="/mi-hotel" element={<HotelPanel key={session.user.id} userId={session.user.id} />} />
+      <Route path="*" element={<Navigate to="/mi-hotel" replace />} />
+    </Routes></main>
+  </div>;
 
   return (
     <div className="ro-app">
@@ -82,6 +105,9 @@ export default function App() {
         <main className="ro-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/cuenta" element={<AccountPage />} />
+            <Route path="/alojamiento/hotel-profiles" element={<HotelProfilesPage />} />
+            <Route path="/alojamiento/rooms" element={<RoomsPage />} />
             <Route path="/alojamiento/accommodations" element={<AccommodationsPage />} />
             <Route path="/alojamiento/hosts" element={<HostsPage />} />
             <Route path="/alojamiento/host-accounts" element={<HostAccountsPage />} />

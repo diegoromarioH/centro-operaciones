@@ -53,7 +53,7 @@ export default function EditForm({ table, record, fkOptions, onCancel, onSave, s
     // active, amenities, metadata…) y mandar null ahí rompe el insert
     // aunque el campo no fuera obligatorio. Al editar sí se respeta el
     // null, porque puede ser una limpieza intencional de un campo existente.
-    if (!record) {
+    if (!record?.id) {
       Object.keys(payload).forEach((k) => {
         if (payload[k] === null) delete payload[k];
       });
@@ -64,7 +64,7 @@ export default function EditForm({ table, record, fkOptions, onCancel, onSave, s
   const form = (
     <form className={variant === 'inline' ? 'ro-modal ro-inline-card' : 'ro-modal'} onSubmit={handleSubmit}>
       <div className="ro-modal-header">
-        <h3>{record ? `Editar ${table.label.toLowerCase()}` : `Nuevo registro — ${table.label}`}</h3>
+        <h3>{record?.id ? `Editar ${table.label.toLowerCase()}` : `Nuevo registro — ${table.label}`}</h3>
         {variant === 'modal' && (
           <button type="button" className="ro-icon-btn" onClick={onCancel}>
             <X size={18} />

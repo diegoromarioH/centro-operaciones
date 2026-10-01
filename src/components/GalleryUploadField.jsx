@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { GripVertical, ImageOff, Loader2, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { resizeImageFile } from '../utils/resizeImage';
+import { uploadPath } from '../lib/uploadPath';
 
 const MAX_MB = 8;
 
@@ -47,9 +48,10 @@ export default function GalleryUploadField({ bucket, folder, value, onChange }) 
       setError(null);
       setUploading(true);
       const newUrls = [];
+      try {
       for (const file of list) {
         const resized = await resizeImageFile(file);
-        const path = `${folder}/${Date.now()}-${slugifyFilename(resized.name)}`;
+        const path = await uploadPath(folder, slugifyFilename(resized.name));
         const { error: uploadError } = await supabase.storage.from(bucket).upload(path, resized, {
           cacheControl: '604800',
           upsert: false,
@@ -62,7 +64,12 @@ export default function GalleryUploadField({ bucket, folder, value, onChange }) 
         newUrls.push(data.publicUrl);
       }
       setUploading(false);
-      if (newUrls.length) onChange([...urls, ...newUrls]);
+      } catch (e) { setError(e.message || 'No se pudieron subir las imágenes.'); }
+      finally {
+        setUploading(false);
+        if (inputRef.current) inputRef.current.value = '';
+        if (newUrls.length) onChange([...urls, ...newUrls]);
+      }
     },
     [bucket, folder, urls, onChange]
   );

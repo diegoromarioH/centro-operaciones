@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { ImageOff, Loader2, Trash2, UploadCloud } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { resizeImageFile } from '../utils/resizeImage';
+import { uploadPath } from '../lib/uploadPath';
 
 const MAX_MB = 8;
 
@@ -42,8 +43,9 @@ export default function ImageUploadField({ bucket, folder, value, onChange }) {
       }
       setError(null);
       setUploading(true);
+      try {
       const resized = await resizeImageFile(file);
-      const path = `${folder}/${Date.now()}-${slugifyFilename(resized.name)}`;
+      const path = await uploadPath(folder, slugifyFilename(resized.name));
       const { error: uploadError } = await supabase.storage.from(bucket).upload(path, resized, {
         cacheControl: '604800',
         upsert: false,
@@ -55,6 +57,8 @@ export default function ImageUploadField({ bucket, folder, value, onChange }) {
       }
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange(data.publicUrl);
+      } catch (e) { setError(e.message || 'No se pudo subir la imagen.'); }
+      finally { setUploading(false); if (inputRef.current) inputRef.current.value = ''; }
     },
     [bucket, folder, onChange]
   );
