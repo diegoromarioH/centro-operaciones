@@ -78,4 +78,17 @@ revoke all on function public.save_listing_submission(uuid,jsonb,boolean) from p
 revoke all on function public.review_listing_submission(uuid,text,text) from public,anon;
 grant execute on function public.save_listing_submission(uuid,jsonb,boolean) to authenticated;
 grant execute on function public.review_listing_submission(uuid,text,text) to authenticated;
+-- Publication is separate from review and requires bookable room information.
+create or replace function private.check_listing_publication() returns trigger language plpgsql security invoker set search_path='' as $$
+begin
+ if new.active and (tg_op='INSERT' or not old.active) then
+  perform private.validate_listing_payload(to_jsonb(new));
+  if not exists(select 1 from public.rooms r where r.accommodation_id=new.id and r.active and r.capacity>0 and r.price>0) then raise exception 'Agrega una habitación activa con capacidad y precio antes de publicar.'; end if;
+ end if;
+ return new;
+end $$;
+-- Invoker trigger needs access to validation; it cannot write privileged data.
+grant execute on function private.validate_listing_payload(jsonb) to authenticated;
+drop trigger if exists ota_listing_publication on public.accommodations;
+create trigger ota_listing_publication before insert or update on public.accommodations for each row execute function private.check_listing_publication();
 commit;

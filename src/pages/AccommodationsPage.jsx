@@ -121,7 +121,7 @@ export default function AccommodationsPage() {
     }
     setToast({
       type: 'success',
-      msg: isNew ? 'Alojamiento creado. Ahora puedes agregar sus habitaciones.' : 'Cambios guardados.',
+      msg: isNew ? 'Ficha creada y oculta. Agrega habitaciones, asigna un anfitrión y publica cuando esté completa.' : 'Cambios guardados.',
     });
     setActive(data);
     reload();

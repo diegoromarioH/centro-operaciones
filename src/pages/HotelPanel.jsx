@@ -10,6 +10,7 @@ import { HOST_FIELDS, hostPayload } from '../auth/access';
 const ownerTable = { ...accommodationTable, columns: accommodationTable.columns.filter(c => HOST_FIELDS.has(c.key)), sections: accommodationTable.sections.filter(s => s.key !== 'config') };
 
 export default function HotelPanel({ userId }) {
+  const [section,setSection] = useState('info');
   const [hotels, setHotels] = useState([]);
   const [selected, setSelected] = useState('');
   const [loading, setLoading] = useState(true);
@@ -53,7 +54,7 @@ export default function HotelPanel({ userId }) {
     {loading ? <div className="ro-empty">Cargando tus alojamientos…</div> : !hotels.length ? <div className="ro-panel ro-empty">Comienza con «Crear alojamiento». Cuando la OTA apruebe tu ficha, aparecerá aquí para administrar habitaciones.</div> : <>
       <label htmlFor="owner-hotel">Alojamiento</label><select id="owner-hotel" className="ro-input" value={selected} onChange={e => { setSelected(e.target.value); setMessage(''); }}>{hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
       <p>{hotel?.active ? 'Tu alojamiento está publicado.' : 'Tu alojamiento está oculto. El administrador controla su publicación.'}</p>
-      {hotel && <><AccommodationForm key={hotel.id} table={ownerTable} record={hotel} saving={saving} onSave={save} /><AccommodationRoomsPanel key={hotel.id + '-rooms'} accommodationId={hotel.id} accommodationName={hotel.name} /><HotelActivity hotel={hotel} /></>}
+      {hotel && <><nav className="ro-panel-toolbar" aria-label="Mi ficha">{[["info","Información y políticas"],["rooms","Habitaciones"],["activity","Solicitudes y reservas"]].map(([key,label])=><button className={"ro-btn "+(section===key?"ro-btn-primary":"ro-btn-ghost")} key={key} onClick={()=>setSection(key)}>{label}</button>)}</nav>{section === "info" && <AccommodationForm key={hotel.id} table={ownerTable} record={hotel} saving={saving} onSave={save} />}{section === "rooms" && <AccommodationRoomsPanel key={hotel.id + '-rooms'} accommodationId={hotel.id} accommodationName={hotel.name} />}{section === "activity" && <HotelActivity hotel={hotel} />}</>}
     </>}
   </div>;
 }

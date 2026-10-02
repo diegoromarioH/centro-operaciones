@@ -7,6 +7,7 @@ grant usage on schema auth to authenticated;
 create table profiles(id uuid primary key,role text,active boolean);
 create table hosts(id uuid primary key,user_id uuid,active boolean);
 create table accommodations(id uuid primary key default gen_random_uuid(),name text not null,slug text unique not null,currency text default 'USD',active boolean default true,accommodation_type text,description text,address text,zone text,main_image_url text,payment_policy text,cancellation_policy text,price_from numeric,deposit_required boolean,deposit_percent numeric);
+create table rooms(id uuid primary key default gen_random_uuid(),accommodation_id uuid references accommodations,active boolean,capacity integer,price numeric);
 create table accommodation_hosts(accommodation_id uuid references accommodations,host_id uuid references hosts,is_primary boolean);
 create table owner_submissions(id uuid primary key default gen_random_uuid(),owner_id uuid,submission_type text,status text default 'draft',payload jsonb,reviewer_id uuid,review_notes text,submitted_at timestamptz,reviewed_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
 create function public.is_admin() returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.profiles where id=auth.uid() and active and role='admin')$$;
@@ -38,4 +39,9 @@ do $$begin
  if (select count(*) from accommodations)<>1 or exists(select 1 from accommodations where active) or (select count(*) from accommodation_hosts)<>1 then raise exception 'Approval did not create one hidden linked listing';end if;
  if has_function_privilege('anon','public.review_listing_submission(uuid,text,text)','EXECUTE') then raise exception 'Anonymous RPC allowed';end if;
 end$$;
+do $$begin
+ begin update accommodations set active=true;raise exception 'Published without room';exception when raise_exception then if SQLERRM='Published without room' then raise;end if;end;
+end$$;
+insert into rooms(accommodation_id,active,capacity,price) select id,true,2,40 from accommodations;
+update accommodations set active=true;
 select 'Onboarding permission and approval checks passed' as result;
