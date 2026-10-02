@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { X, MessageCircle, Mail, Loader2, Save, Trash2 } from 'lucide-react';
 import { STAGES, STATUS_LABELS, REQUEST_TYPE_LABELS, whatsappLink } from '../config/requestStages';
 
@@ -45,6 +46,7 @@ export default function RequestDetailPanel({ request, saving, onClose, onSave, o
 
           <section className="ro-req-section">
             <h4>Servicio solicitado</h4>
+            {request.target_type === 'accommodation' && <Link className="ro-btn ro-btn-primary" to={`/ventas/reservations?request=${request.id}`}>Registrar reserva en la plataforma</Link>}
             <div className="ro-req-row"><span>Tipo</span><b>{REQUEST_TYPE_LABELS[request.request_type] || request.request_type}</b></div>
             <div className="ro-req-row"><span>Servicio</span><b>{request.service_name || '—'}</b></div>
             {request.target_slug && <div className="ro-req-row"><span>Slug</span><b>{request.target_slug}</b></div>}

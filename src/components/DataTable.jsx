@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Download, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { AlertCircle, Eye, Download, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { FIELD } from '../lib/fieldTypes';
 import { fmtCell, columnFor } from '../utils/format';
@@ -42,10 +42,10 @@ function useTableData(table) {
 // Componente único que renderiza el CRUD completo de una tabla, dirigido por
 // la configuración (table). Todas las páginas en src/pages/ son una línea de
 // código que le pasan su config a este mismo componente.
-export default function DataTable({ table }) {
+export default function DataTable({ table, rowFilter, compareRows, initialRecord }) {
   const { rows, loading, error, reload } = useTableData(table);
   const [search, setSearch] = useState('');
-  const [editing, setEditing] = useState(undefined); // undefined = cerrado, null = nuevo
+  const [editing, setEditing] = useState(initialRecord); // undefined = cerrado, null = nuevo
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [fkOptions, setFkOptions] = useState({});
   const [saving, setSaving] = useState(false);
@@ -78,22 +78,27 @@ export default function DataTable({ table }) {
   }, [table.key]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((r) => table.list.some((k) => String(r[k] ?? '').toLowerCase().includes(q)));
-  }, [rows, search, table.list]);
+    const q = search.trim().toLowerCase();
+    const result = rows.filter(r => (!rowFilter || rowFilter(r)) && (!q || table.list.some(k => {
+      const field = columnFor(table, k);
+      const value = field.type === FIELD.FK ? (fkOptions[k] || []).find(o => o.id === r[k])?.label || r[k] : r[k];
+      return String(value ?? '').toLowerCase().includes(q);
+    })));
+    return compareRows ? result.sort(compareRows) : result;
+  }, [rows, search, table.list, rowFilter, compareRows, fkOptions]);
 
   async function handleSave(rawPayload) {
+    if (table.readOnly) return;
     setSaving(true);
     const payload = typeof table.deriveOnSave === 'function' ? table.deriveOnSave(rawPayload) : rawPayload;
     const isNew = !editing?.id;
     const query = isNew
       ? supabase.from(table.key).insert(payload).select()
       : supabase.from(table.key).update(payload).eq('id', editing.id).select();
-    const { error } = await query;
+    const { data, error } = await query;
     setSaving(false);
-    if (error) {
-      setToast({ type: 'error', msg: error.message });
+    if (error || !data?.length) {
+      setToast({ type: 'error', msg: error?.message || 'El registro no se guardó. Revisa tus permisos.' });
     } else {
       setToast({ type: 'success', msg: isNew ? 'Registro creado.' : 'Cambios guardados.' });
       setEditing(undefined);
@@ -102,6 +107,7 @@ export default function DataTable({ table }) {
   }
 
   async function handleDelete(row) {
+    if (table.readOnly || table.noDelete) return;
     const { error } = await supabase.from(table.key).delete().eq('id', row.id);
     if (error) setToast({ type: 'error', msg: error.message });
     else {
@@ -145,8 +151,7 @@ export default function DataTable({ table }) {
 
       {table.readOnly && (
         <div className="ro-readonly-banner">
-          Esta tabla la llena la propia aplicación automáticamente. Aquí solo puedes consultarla y borrar registros
-          antiguos.
+          Esta tabla es de solo lectura. Puedes consultar sus registros y exportarlos.
         </div>
       )}
 
@@ -209,16 +214,16 @@ export default function DataTable({ table }) {
                       );
                     })}
                     <td className="ro-actions-col" onClick={(e) => e.stopPropagation()}>
-                      <button className="ro-icon-btn" title="Editar" onClick={() => setEditing(row)}>
-                        <Pencil size={15} />
+                      <button className="ro-icon-btn" title={table.readOnly ? "Ver detalle" : "Editar"} onClick={() => setEditing(row)}>
+                        {table.readOnly ? <Eye size={15} /> : <Pencil size={15} />}
                       </button>
-                      <button
+                      {!table.readOnly && !table.noDelete && <button
                         className="ro-icon-btn ro-icon-btn-danger"
                         title="Eliminar"
                         onClick={() => setConfirmDelete(row)}
                       >
                         <Trash2 size={15} />
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}
@@ -227,7 +232,11 @@ export default function DataTable({ table }) {
           </div>
         ))}
 
-      {editing !== undefined && (
+      {editing !== undefined && table.readOnly && <div className="ro-modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) setEditing(undefined); }}>
+        <div className="ro-modal"><div className="ro-modal-header"><h3>{table.label}</h3><button className="ro-icon-btn" title="Cerrar" onClick={() => setEditing(undefined)}><X size={18} /></button></div>
+        <div className="ro-modal-body">{table.columns.map(c => <div className="ro-field" key={c.key}><strong>{c.label}</strong><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{typeof editing[c.key] === 'object' ? JSON.stringify(editing[c.key], null, 2) : String(editing[c.key] ?? '—')}</pre></div>)}</div></div>
+      </div>}
+      {editing !== undefined && !table.readOnly && (
         <EditForm
           key={editing?.id || 'new'}
           table={table}

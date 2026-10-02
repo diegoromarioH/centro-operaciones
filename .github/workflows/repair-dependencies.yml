@@ -1,0 +1,52 @@
+name: Repair frontend dependency security
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/repair-dependencies.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repair-dependencies-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch Vite and keep development servers local
+        run: |
+          npm install --save-dev --save-exact vite@6.4.3
+          npm pkg set 'scripts.dev=vite' 'scripts.preview=vite preview'
+          npm install --save-exact react-router-dom@7.18.4
+          npm audit fix
+      - name: Check clean install, tests, build and audit
+        run: |
+          npm ci
+          npm test
+          npm run build
+          npm audit --audit-level=moderate
+      - name: Save verified dependency changes to this branch
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          git commit -m 'Patch Vite and dependencies after install, test, build and audit checks'
+          git push
+      - name: Preserve diagnostic files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-repair-results
+          path: |
+            package.json
+            package-lock.json
+          retention-days: 7

@@ -4,7 +4,9 @@ import { supabase } from '../lib/supabaseClient';
 import accommodationsTable from '../config/tables/accommodations';
 import AccommodationForm from '../components/AccommodationForm';
 import AccommodationRoomsPanel from '../components/AccommodationRoomsPanel';
+import HotelActivity from '../components/HotelActivity';
 import Toast from '../components/Toast';
+import { useSearchParams } from 'react-router-dom';
 
 function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -32,7 +34,7 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
       />
 
       {!isNew && (
-        <AccommodationRoomsPanel accommodationId={accommodation.id} accommodationName={accommodation.name} />
+        <><AccommodationRoomsPanel accommodationId={accommodation.id} accommodationName={accommodation.name} /><HotelActivity hotel={accommodation} /></>
       )}
 
       {confirmDelete && (
@@ -65,6 +67,9 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
 }
 
 export default function AccommodationsPage() {
+  const [params, setParams] = useSearchParams();
+  const hotelId = params.get('hotel');
+  const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -74,7 +79,9 @@ export default function AccommodationsPage() {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('accommodations').select('*').order('name', { ascending: true });
+    setLoadError(null);
+    const { data, error } = await supabase.from('accommodations').select('*').order('name', { ascending: true });
+    if (error) setLoadError(error.message);
     setList(data || []);
     setLoading(false);
   }, []);
@@ -82,6 +89,8 @@ export default function AccommodationsPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => { if (hotelId) { const row = list.find(h => h.id === hotelId); if (row) setActive(row); } }, [hotelId, list]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return list;
@@ -127,6 +136,7 @@ export default function AccommodationsPage() {
           accommodation={active}
           saving={saving}
           onBack={() => {
+            setParams({});
             setActive(null);
             reload();
           }}
@@ -150,7 +160,7 @@ export default function AccommodationsPage() {
         </button>
       </div>
 
-      {loading ? (
+      {loadError ? <div className="ro-alert" role="alert">{loadError}<button className="ro-btn ro-btn-ghost" onClick={reload}>Reintentar</button></div> : loading ? (
         <div className="ro-empty">
           <Loader2 size={18} className="ro-spin" /> Cargando…
         </div>

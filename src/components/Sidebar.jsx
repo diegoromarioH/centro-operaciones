@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, KeyRound } from 'lucide-react';
+import { LayoutGrid, KeyRound, Building2, DollarSign } from 'lucide-react';
 import { TABLES, GROUPS } from '../config/tables';
 
 // Páginas que no están ligadas a una sola tabla de Supabase (por ejemplo,
@@ -8,7 +8,9 @@ import { TABLES, GROUPS } from '../config/tables';
 // TABLES. Se agregan aquí a mano para que sí salgan en el menú, agrupadas
 // igual que el resto.
 const EXTRA_PAGES = [
-  { key: 'host-accounts', label: 'Accesos de dueños', icon: KeyRound, path: '/alojamiento/host-accounts', group: 'Alojamiento' },
+  { key: 'commission-collections', label: 'Comisiones y cobros', icon: DollarSign, path: '/finanzas/collections', group: 'Finanzas y automatización' },
+  { key: 'hotel-profiles', label: 'Perfiles de alojamientos', icon: Building2, path: '/alojamiento/hotel-profiles', group: 'Alojamiento' },
+  { key: 'host-accounts', label: 'Accesos de anfitriones', icon: KeyRound, path: '/alojamiento/host-accounts', group: 'Alojamiento' },
 ];
 
 export default function Sidebar({ open, onClose }) {
@@ -18,7 +20,7 @@ export default function Sidebar({ open, onClose }) {
         <div className="ro-sidebar-brand">
           <span className="ro-brand-mark">RO</span>
           <div>
-            <div className="ro-brand-title">Centro de Operaciones</div>
+            <div className="ro-brand-title">Superpanel</div>
             <div className="ro-brand-sub">Reserva Ometepe</div>
           </div>
         </div>
