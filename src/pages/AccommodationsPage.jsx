@@ -4,10 +4,19 @@ import { supabase } from '../lib/supabaseClient';
 import accommodationsTable from '../config/tables/accommodations';
 import AccommodationForm from '../components/AccommodationForm';
 import AccommodationRoomsPanel from '../components/AccommodationRoomsPanel';
+import HotelActivity from '../components/HotelActivity';
+import ListingSubmissions from '../components/ListingSubmissions';
+import HostAccountsPage from './HostAccountsPage';
+import CommissionCollectionsPage from './CommissionCollectionsPage';
+import DataTable from '../components/DataTable';
+import benefits from '../config/tables/benefits';
 import Toast from '../components/Toast';
+import { useSearchParams } from 'react-router-dom';
 
 function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }) {
+  const [section, setSection] = useState("info");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const benefitTable = useMemo(()=>({...benefits,scope:{target_type:"accommodation",target_id:accommodation.id},columns:benefits.columns.filter(c=>!["target_type","target_id","target_slug"].includes(c.key))}),[accommodation.id]);
   const isNew = !accommodation.id;
 
   return (
@@ -18,35 +27,36 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
         </button>
         {!isNew && (
           <button className="ro-btn ro-btn-ghost ro-icon-btn-danger" onClick={() => setConfirmDelete(true)}>
-            <Trash2 size={15} /> Eliminar alojamiento
+            <Trash2 size={15} /> Archivar alojamiento
           </button>
         )}
       </div>
 
-      <AccommodationForm
+      {!isNew && <nav className="ro-panel-toolbar" aria-label="Ficha del alojamiento">{[["info","Información y políticas"],["rooms","Habitaciones"],["benefits","Beneficios"],["host","Anfitrión"],["activity","Solicitudes y reservas"],["finance","Cobros"]].map(([key,label])=><button key={key} className={"ro-btn "+(section===key?"ro-btn-primary":"ro-btn-ghost")} onClick={()=>setSection(key)}>{label}</button>)}</nav>}
+      {(isNew || section === "info") && <AccommodationForm
         key={accommodation.id || 'new-accommodation'}
         table={accommodationsTable}
         record={isNew ? null : accommodation}
         saving={saving}
         onSave={onSave}
-      />
+      />}
 
       {!isNew && (
-        <AccommodationRoomsPanel accommodationId={accommodation.id} accommodationName={accommodation.name} />
+        <>{section === "benefits" && <DataTable key={accommodation.id} table={benefitTable} />}{section === "rooms" && <AccommodationRoomsPanel accommodationId={accommodation.id} accommodationName={accommodation.name} />}{section === "activity" && <HotelActivity hotel={accommodation} />}{section === "host" && <HostAccountsPage accommodationId={accommodation.id} />}{section === "finance" && <CommissionCollectionsPage accommodationId={accommodation.id} />}</>
       )}
 
       {confirmDelete && (
         <div className="ro-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirmDelete(false); }}>
           <div className="ro-modal ro-modal-sm">
             <div className="ro-modal-header">
-              <h3>Eliminar alojamiento</h3>
+              <h3>Archivar alojamiento</h3>
               <button className="ro-icon-btn" onClick={() => setConfirmDelete(false)}>
                 <X size={18} />
               </button>
             </div>
             <div className="ro-modal-body">
               <p>
-                ¿Eliminar <strong>{accommodation.name}</strong>? Esto también eliminará sus habitaciones. No se puede deshacer.
+                ¿Archivar <strong>{accommodation.name}</strong>? Se ocultará de la landing y conservará sus habitaciones, reservas e historial.
               </p>
             </div>
             <div className="ro-modal-footer">
@@ -54,7 +64,7 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
                 Cancelar
               </button>
               <button className="ro-btn ro-btn-danger" onClick={onDelete}>
-                <Trash2 size={15} /> Eliminar
+                <Trash2 size={15} /> Archivar
               </button>
             </div>
           </div>
@@ -65,6 +75,9 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
 }
 
 export default function AccommodationsPage() {
+  const [params, setParams] = useSearchParams();
+  const hotelId = params.get('hotel');
+  const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -74,7 +87,9 @@ export default function AccommodationsPage() {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('accommodations').select('*').order('name', { ascending: true });
+    setLoadError(null);
+    const { data, error } = await supabase.from('accommodations').select('*').order('name', { ascending: true });
+    if (error) setLoadError(error.message);
     setList(data || []);
     setLoading(false);
   }, []);
@@ -82,6 +97,8 @@ export default function AccommodationsPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => { if (hotelId) { const row = list.find(h => h.id === hotelId); if (row) setActive(row); } }, [hotelId, list]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return list;
@@ -91,9 +108,10 @@ export default function AccommodationsPage() {
 
   async function handleSaveAccommodation(payload) {
     setSaving(true);
-    const isNew = !active?.id;
+    const benefitTable = useMemo(()=>({...benefits,scope:{target_type:"accommodation",target_id:accommodation.id},columns:benefits.columns.filter(c=>!["target_type","target_id","target_slug"].includes(c.key))}),[accommodation.id]);
+  const isNew = !active?.id;
     const query = isNew
-      ? supabase.from('accommodations').insert(payload).select().single()
+      ? supabase.from('accommodations').insert({...payload,active:false}).select().single()
       : supabase.from('accommodations').update(payload).eq('id', active.id).select().single();
     const { data, error } = await query;
     setSaving(false);
@@ -103,19 +121,19 @@ export default function AccommodationsPage() {
     }
     setToast({
       type: 'success',
-      msg: isNew ? 'Alojamiento creado. Ahora puedes agregar sus habitaciones.' : 'Cambios guardados.',
+      msg: isNew ? 'Ficha creada y oculta. Agrega habitaciones, asigna un anfitrión y publica cuando esté completa.' : 'Cambios guardados.',
     });
     setActive(data);
     reload();
   }
 
   async function handleDeleteAccommodation() {
-    const { error } = await supabase.from('accommodations').delete().eq('id', active.id);
+    const { error } = await supabase.from('accommodations').update({active:false}).eq('id', active.id).select('id').single();
     if (error) {
       setToast({ type: 'error', msg: error.message });
       return;
     }
-    setToast({ type: 'success', msg: 'Alojamiento eliminado.' });
+    setToast({ type: 'success', msg: 'Alojamiento archivado. Historial conservado.' });
     setActive(null);
     reload();
   }
@@ -127,6 +145,7 @@ export default function AccommodationsPage() {
           accommodation={active}
           saving={saving}
           onBack={() => {
+            setParams({});
             setActive(null);
             reload();
           }}
@@ -140,6 +159,7 @@ export default function AccommodationsPage() {
 
   return (
     <div className="ro-panel">
+      <ListingSubmissions admin onApproved={reload} />
       <div className="ro-panel-toolbar">
         <div className="ro-search-box">
           <Search size={16} />
@@ -150,7 +170,7 @@ export default function AccommodationsPage() {
         </button>
       </div>
 
-      {loading ? (
+      {loadError ? <div className="ro-alert" role="alert">{loadError}<button className="ro-btn ro-btn-ghost" onClick={reload}>Reintentar</button></div> : loading ? (
         <div className="ro-empty">
           <Loader2 size={18} className="ro-spin" /> Cargando…
         </div>
@@ -172,7 +192,7 @@ export default function AccommodationsPage() {
             </thead>
             <tbody>
               {filtered.map((row) => (
-                <tr key={row.id} className="ro-row-clickable" onClick={() => setActive(row)}>
+                <tr key={row.id} className="ro-row-clickable" onClick={() => {setParams({hotel:row.id});setActive(row);}}>
                   <td className="ro-thumb-col">
                     {row.main_image_url ? (
                       <img className="ro-thumb" src={row.main_image_url} alt="" />

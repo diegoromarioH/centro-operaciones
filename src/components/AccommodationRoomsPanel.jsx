@@ -9,6 +9,7 @@ import Toast from './Toast';
 // alojamiento específico, sin salir de su ficha. Reutiliza la config y el
 // EditForm de "rooms" tal cual — solo pre-llena accommodation_id.
 export default function AccommodationRoomsPanel({ accommodationId, accommodationName }) {
+  const [loadError, setLoadError] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(undefined); // undefined = cerrado
@@ -18,11 +19,13 @@ export default function AccommodationRoomsPanel({ accommodationId, accommodation
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    setLoadError(null);
+    const { data, error } = await supabase
       .from('rooms')
       .select('*')
       .eq('accommodation_id', accommodationId)
       .order('sort_order', { ascending: true });
+    if (error) setLoadError(error.message);
     setRooms(data || []);
     setLoading(false);
   }, [accommodationId]);
@@ -33,16 +36,17 @@ export default function AccommodationRoomsPanel({ accommodationId, accommodation
 
   const fkOptions = { accommodation_id: [{ id: accommodationId, label: accommodationName || 'Este alojamiento' }] };
 
-  async function handleSave(payload) {
+  async function handleSave(rawPayload) {
+    const payload = { ...rawPayload, accommodation_id: accommodationId };
     setSaving(true);
     const isNew = !editing?.id;
     const query = isNew
       ? supabase.from('rooms').insert(payload).select()
       : supabase.from('rooms').update(payload).eq('id', editing.id).select();
-    const { error } = await query;
+    const { data, error } = await query;
     setSaving(false);
-    if (error) {
-      setToast({ type: 'error', msg: error.message });
+    if (error || !data?.length) {
+      setToast({ type: 'error', msg: error?.message || 'No tienes permiso para guardar esta habitación.' });
       return;
     }
     setToast({ type: 'success', msg: isNew ? 'Habitación agregada.' : 'Cambios guardados.' });
@@ -71,7 +75,7 @@ export default function AccommodationRoomsPanel({ accommodationId, accommodation
         </button>
       </div>
 
-      {loading ? (
+      {loadError ? <div className="ro-alert" role="alert">{loadError}<button className="ro-btn ro-btn-ghost" onClick={reload}>Reintentar</button></div> : loading ? (
         <div className="ro-empty">Cargando…</div>
       ) : rooms.length === 0 ? (
         <div className="ro-empty">Todavía no hay habitaciones. Agrega la primera con "Nueva habitación".</div>
