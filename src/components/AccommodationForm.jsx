@@ -8,7 +8,7 @@ import FieldInput from './FieldInput';
 // de anfitrión de Airbnb o la extranet de Booking, en vez de una lista plana
 // de ~35 campos. Se puede guardar desde cualquier pestaña — si falta un
 // campo obligatorio en otra sección, se salta ahí automáticamente.
-export default function AccommodationForm({ table, record, saving, onSave }) {
+export default function AccommodationForm({ table, record, saving, onSave, draft = false, submitLabel, secondarySubmitLabel }) {
   const sections = table.sections || [{ key: 'general', label: 'General' }];
   const [tab, setTab] = useState(sections[0].key);
   const [values, setValues] = useState(() => {
@@ -30,7 +30,7 @@ export default function AccommodationForm({ table, record, saving, onSave }) {
   }
 
   function sectionIsComplete(sectionCols) {
-    return sectionCols.every((c) => {
+    return sectionCols.filter(c => c.required).every((c) => {
       const v = values[c.key];
       if (c.type === FIELD.ARRAY || c.type === FIELD.CHECKLIST) return Array.isArray(v) ? v.length > 0 : !!v;
       return v !== null && v !== undefined && v !== '';
@@ -46,7 +46,7 @@ export default function AccommodationForm({ table, record, saving, onSave }) {
       if (c.type === FIELD.ARRAY && typeof payload[c.key] === 'string') {
         payload[c.key] = payload[c.key].split(',').map((s) => s.trim()).filter(Boolean);
       }
-      if (c.required && (payload[c.key] === null || payload[c.key] === undefined || payload[c.key] === '')) {
+      if (!draft && c.required && (payload[c.key] === null || payload[c.key] === undefined || payload[c.key] === '')) {
         missingFields.push(c.label);
         if (!firstMissingSection) firstMissingSection = c.section || sections[0].key;
       }
@@ -57,12 +57,12 @@ export default function AccommodationForm({ table, record, saving, onSave }) {
       return;
     }
     setMissing([]);
-    if (!record) {
+    if (!record?.id) {
       Object.keys(payload).forEach((k) => {
         if (payload[k] === null) delete payload[k];
       });
     }
-    onSave(payload);
+    onSave(payload, e.nativeEvent.submitter?.value || 'draft');
   }
 
   return (
@@ -105,8 +105,9 @@ export default function AccommodationForm({ table, record, saving, onSave }) {
       <div className="ro-modal-footer ro-otaform-footer">
         <button type="submit" className="ro-btn ro-btn-primary" disabled={saving}>
           {saving ? <Loader2 size={16} className="ro-spin" /> : <Save size={16} />}
-          {saving ? 'Guardando…' : record ? 'Guardar cambios' : 'Crear alojamiento'}
+          {saving ? 'Guardando…' : submitLabel || (record ? 'Guardar cambios' : 'Crear alojamiento')}
         </button>
+        {secondarySubmitLabel && <button type="submit" value="submitted" className="ro-btn ro-btn-ghost" disabled={saving}>{secondarySubmitLabel}</button>}
       </div>
     </form>
   );

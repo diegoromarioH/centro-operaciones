@@ -66,11 +66,11 @@ function LoadingScreen() {
 function CurrentTopbar({ onOpenSidebar, userEmail }) {
   const location = useLocation();
   const table = TABLES.find((t) => t.path === location.pathname);
-  const title = location.pathname === '/finanzas/collections' ? 'Comisiones y cobros' : location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de alojamientos' : table ? table.label : 'Inicio';
+  const title = location.pathname === '/alojamiento/host-accounts' ? 'Anfitriones e invitaciones' : location.pathname === '/finanzas/collections' ? 'Comisiones y cobros' : location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de alojamientos' : table ? table.label : 'Inicio';
   const subtitle = table
     ? table.readOnly
       ? 'Registro de solo lectura'
-      : 'Gestiona todos los registros de esta tabla'
+      : 'Gestiona el contenido y la operación de Reserva Ometepe'
     : 'Resumen general de Reserva Ometepe';
   return <Topbar title={title} subtitle={subtitle} userEmail={userEmail} onOpenSidebar={onOpenSidebar} />;
 }
@@ -107,7 +107,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/cuenta" element={<AccountPage />} />
-            <Route path="/alojamiento/hotel-profiles" element={<HotelProfilesPage />} />
+            <Route path="/alojamiento/hotel-profiles" element={<Navigate to="/alojamiento/accommodations" replace />} />
             <Route path="/alojamiento/rooms" element={<RoomsPage />} />
             <Route path="/alojamiento/accommodations" element={<AccommodationsPage />} />
             <Route path="/alojamiento/hosts" element={<HostsPage />} />

@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabaseClient';
 import { TABLES, GROUPS } from '../config/tables';
 
 // Tablas más relevantes para las tarjetas grandes de resumen.
-const HIGHLIGHTS = ['accommodations', 'experiences', 'motorcycles', 'requests', 'homepage_banners'];
+const HIGHLIGHTS = ['requests', 'reservations', 'accommodations', 'homepage_banners'];
+const QUICK_ACTIONS=[['Editar landing','/marketing/homepage-banners'],['Revisar alojamientos','/alojamiento/accommodations'],['Invitar anfitrión','/alojamiento/host-accounts'],['Gestionar solicitudes','/ventas/requests'],['Registrar reservas','/ventas/reservations'],['Cobrar comisiones','/finanzas/collections']];
 
 export default function Dashboard() {
   const [errors, setErrors] = useState([]);
@@ -19,7 +20,7 @@ export default function Dashboard() {
       const results = {};
       const failures = [];
       await Promise.all(
-        TABLES.map(async (t) => {
+        TABLES.filter(t=>HIGHLIGHTS.includes(t.key)).map(async (t) => {
           const { count, error } = await supabase.from(t.key).select('*', { count: 'exact', head: true });
           if (error) failures.push(t.label);
           results[t.key] = error ? null : count ?? 0;
@@ -74,23 +75,7 @@ export default function Dashboard() {
         })}
       </div>
 
-      <div className="ro-dashboard-groups">
-        {GROUPS.map((group) => (
-          <div className="ro-group-card" key={group}>
-            <h3>{group}</h3>
-            <ul>
-              {TABLES.filter((t) => t.group === group).map((t) => (
-                <li key={t.key}>
-                  <Link to={t.path}>
-                    <span>{t.label}</span>
-                    <span className="ro-group-card-count">{loading ? '—' : counts[t.key] ?? '—'}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <div className="ro-dashboard-groups">{QUICK_ACTIONS.map(([label,path])=><Link className="ro-group-card" to={path} key={path}><h3>{label}</h3><ArrowRight size={18}/></Link>)}</div>
     </div>
   );
 }

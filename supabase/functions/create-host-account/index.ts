@@ -35,12 +35,14 @@ Deno.serve(async (req: Request) => {
     const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const display_name = typeof input.display_name === 'string' ? input.display_name.trim() : '';
     const accommodation_id = typeof input.accommodation_id === 'string' ? input.accommodation_id : '';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !display_name || display_name.length > 200 || !/^[0-9a-f-]{36}$/i.test(accommodation_id)) return reply({ error: 'Completa nombre, correo y alojamiento válidos.' }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !display_name || display_name.length > 200 || (accommodation_id && !/^[0-9a-f-]{36}$/i.test(accommodation_id))) return reply({ error: 'Completa nombre y correo válidos; el alojamiento es opcional.' }, 400);
     const phone = typeof input.phone === 'string' ? input.phone.trim().slice(0,60) : null;
     const whatsapp = typeof input.whatsapp === 'string' ? input.whatsapp.trim().slice(0,60) : null;
+    if (accommodation_id) {
     const { data: hotel, error: hotelError } = await admin.from('accommodations').select('id').eq('id',accommodation_id).single();
     if (hotelError || !hotel) return reply({ error: 'El alojamiento no existe. Crea su ficha antes de asignar accesos.' }, 400);
 
+    }
     const { data: existing, error: existingError } = await admin.from('profiles').select('id,role,active').eq('email',email).maybeSingle();
     if (existingError) throw existingError;
     let userId: string;
@@ -68,6 +70,7 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
       hostId = data.id; createdHostId = hostId;
     }
+    if (accommodation_id) {
     const { data: primary, error: primaryError } = await admin.from('accommodation_hosts').select('id').eq('accommodation_id',accommodation_id).eq('is_primary',true).limit(1);
     if (primaryError) throw primaryError;
     const { data: link, error: linkLookupError } = await admin.from('accommodation_hosts').select('id').eq('host_id',hostId).eq('accommodation_id',accommodation_id).maybeSingle();
@@ -75,6 +78,7 @@ Deno.serve(async (req: Request) => {
     if (!link) {
       const { error } = await admin.from('accommodation_hosts').insert({ accommodation_id,host_id:hostId,is_primary:!primary?.length });
       if (error) throw error;
+    }
     }
     return reply({ ok:true,user_id:userId,host_id:hostId,temp_password,existing_account:!createdUserId });
   } catch (error) {

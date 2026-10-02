@@ -96,3 +96,12 @@ Verificación de esta segunda entrega:
 Despliegue: aplicar primero `ota_access.sql`, luego `ota_finance.sql` en transacción, ejecutar pruebas en un entorno aislado y compilar/probar el frontend antes de publicar. Asignar las navieras a horarios históricos y confirmar el porcentaje comercial y la política de cancelación con cada anfitrión. No aplicar una comisión retrospectiva sin revisar el acuerdo.
 
 No se conecta una pasarela ni se envían mensajes. Para registrar también reservas creadas fuera de este centro (landing, panel del anfitrión, llamadas o WhatsApp), hace falta integrar esos puntos de entrada con el mismo registro. Esta propuesta habilita el flujo manual del superpanel; no afirma que los otros canales ya lo cumplan. El panel del anfitrión continúa consultando las reservas y no tiene acceso al libro interno de cobros. Comprobantes adjuntos, conciliación bancaria, comisiones de cancelación, suscripciones y PDF de facturación quedan pendientes.
+
+## Ficha y alta de alojamientos (2 octubre 2026)
+- Navegación por operación, landing, movilidad, finanzas, marketing, estadísticas y configuración. Habitaciones, políticas, beneficios, anfitrión, actividad y cobros se consultan desde una ficha.
+- La OTA puede crear una ficha oculta y asignar un anfitrión posteriormente; también puede generar credenciales sin alojamiento previo. Compartir credenciales sigue siendo manual.
+- El anfitrión guarda borradores o los envía a revisión. La OTA pide cambios, rechaza con motivo o aprueba. Aprobar crea ficha oculta y vínculo en una transacción; publicar se controla desde la ficha tras completar habitaciones.
+- `database/ota_onboarding.sql` debe aplicarse después de `ota_access.sql`. Las escrituras de solicitudes pasan por RPC con comprobación de rol y propietario, bloqueo de fila y lista permitida de campos. Funciones con privilegios se alojan en `private`; las públicas son invocadoras.
+- Archivar oculta la ficha conservando el historial. No es un bloqueo comercial de nuevas reservas: la validación de disponibilidad sigue pendiente.
+- No se implementa motor de disponibilidad por fecha ni sincronización de canales; tampoco envío automático de invitaciones, ni garantía de reserva instantánea. Se mantiene confirmación manual y registro en la plataforma.
+- Las pruebas SQL de onboarding usan PostgreSQL 17 aislado y un esquema reducido; no sustituyen validación integral de migraciones anteriores contra una copia del esquema productivo.

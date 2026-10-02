@@ -16,6 +16,7 @@ function useTableData(table) {
     setLoading(true);
     setError(null);
     let query = supabase.from(table.key).select('*');
+    Object.entries(table.scope || {}).forEach(([k,v]) => {query=query.eq(k,v);});
     // table.orderBy puede ser un string (una sola columna, como antes) o un
     // arreglo de { column, ascending } para ordenar por varias columnas en
     // cascada, por ejemplo ruta y luego hora en horarios de barco.
@@ -30,7 +31,7 @@ function useTableData(table) {
     if (error) setError(error.message);
     else setRows(data || []);
     setLoading(false);
-  }, [table.key, table.orderBy, table.ascending]);
+  }, [table.key, table.orderBy, table.ascending, table.scope]);
 
   useEffect(() => {
     reload();
@@ -90,7 +91,7 @@ export default function DataTable({ table, rowFilter, compareRows, initialRecord
   async function handleSave(rawPayload) {
     if (table.readOnly) return;
     setSaving(true);
-    const payload = typeof table.deriveOnSave === 'function' ? table.deriveOnSave(rawPayload) : rawPayload;
+    const payload = {...(typeof table.deriveOnSave === 'function' ? table.deriveOnSave(rawPayload) : rawPayload), ...table.scope};
     const isNew = !editing?.id;
     const query = isNew
       ? supabase.from(table.key).insert(payload).select()

@@ -13,10 +13,10 @@ async function allRows(table,columns='*') {
   rows.push(...data); if(data.length<500) return rows;
  }
 }
-export default function CommissionCollectionsPage() {
+export default function CommissionCollectionsPage({ accommodationId = "" }) {
  const [state,setState]=useState({charges:[],payments:[],reservations:[],accommodations:[]});
  const [error,setError]=useState(''), [loading,setLoading]=useState(true), [busy,setBusy]=useState(false);
- const [filter,setFilter]=useState(''), [status,setStatus]=useState('all');
+ const [filter,setFilter]=useState(accommodationId), [status,setStatus]=useState('all');
  const [reservationId,setReservationId]=useState(''), [due,setDue]=useState(today);
  const [chargeId,setChargeId]=useState(''), [amount,setAmount]=useState(''), [date,setDate]=useState(today), [method,setMethod]=useState('transfer'), [reference,setReference]=useState('');
  const [voiding,setVoiding]=useState(null), [reason,setReason]=useState('');
@@ -27,15 +27,15 @@ export default function CommissionCollectionsPage() {
  useEffect(()=>{reload();},[reload]);
  const rows=useMemo(()=>state.charges.map(c=>({...c,...chargeBalance(c,state.payments),accommodation:state.accommodations.find(a=>a.id===c.accommodation_id)?.name || c.accommodation_id,reservation:state.reservations.find(r=>r.id===c.reservation_id)?.reservation_code || c.reservation_id})).filter(c=>(!filter || c.accommodation_id===filter) && (status==='all' || (status==='void' ? c.status==='void' : c.status!=='void' && (status==='paid' ? c.balance===0 : status==='overdue' ? c.balance>0 && c.due_on<today() : c.balance>0)))),[state,filter,status]);
  const totals=collectionTotals(rows,state.payments);
- const eligible=state.reservations.filter(r=>r.target_type==='accommodation' && r.target_id && r.status==='completed' && Number(r.commission_percent)>0 && Number(r.total_amount)>0 && !state.charges.some(c=>c.reservation_id===r.id));
- const open=state.charges.filter(c=>c.status==='open' && chargeBalance(c,state.payments).balance>0);
+ const eligible=state.reservations.filter(r=>(!accommodationId || r.target_id===accommodationId) && r.target_type==='accommodation' && r.target_id && r.status==='completed' && Number(r.commission_percent)>0 && Number(r.total_amount)>0 && !state.charges.some(c=>c.reservation_id===r.id));
+ const open=state.charges.filter(c=>(!accommodationId || c.accommodation_id===accommodationId) && c.status==='open' && chargeBalance(c,state.payments).balance>0);
  async function mutate(operation){if(busy)return;setBusy(true);setError('');try{const result=await operation();if(result.error)throw result.error;if(!result.data?.length)throw Error('No se guardó el registro. Revisa los permisos.');await reload();}catch(e){setError(e.message);}finally{setBusy(false);}}
  return <div className="ro-panel">
   <div className="ro-panel-toolbar"><h2>Comisiones y cobros</h2><button className="ro-btn ro-btn-ghost" disabled={busy || loading} onClick={reload}>Actualizar</button></div>
   <p>El huésped paga directamente al alojamiento. Aquí registras lo que el alojamiento debe a Reserva Ometepe y los pagos recibidos por transferencia, depósito o efectivo.</p>
   {error && <p className="ro-alert" role="alert">{error}</p>}
   {loading ? <p>Cargando cuentas por cobrar…</p> : <>
-  <div className="ro-panel-toolbar"><label>Alojamiento <select className="ro-input" value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todos</option>{state.accommodations.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label><label>Estado <select className="ro-input" value={status} onChange={e=>setStatus(e.target.value)}>{[['all','Todos'],['pending','Pendientes'],['overdue','Vencidos'],['paid','Pagados'],['void','Anulados']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><button className="ro-btn ro-btn-ghost" onClick={()=>exportToCSV('estado-de-cuenta',rows,[{key:'accommodation',label:'Alojamiento'},{key:'reservation',label:'Reserva'},{key:'currency',label:'Moneda'},{key:'amount',label:'Comisión'},{key:'paid',label:'Abonado'},{key:'balance',label:'Saldo'},{key:'due_on',label:'Vencimiento'},{key:'status',label:'Estado'}])}>Exportar estado de cuenta</button></div>
+  <div className="ro-panel-toolbar"><label>Alojamiento <select className="ro-input" disabled={!!accommodationId} value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todos</option>{state.accommodations.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label><label>Estado <select className="ro-input" value={status} onChange={e=>setStatus(e.target.value)}>{[['all','Todos'],['pending','Pendientes'],['overdue','Vencidos'],['paid','Pagados'],['void','Anulados']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><button className="ro-btn ro-btn-ghost" onClick={()=>exportToCSV('estado-de-cuenta',rows,[{key:'accommodation',label:'Alojamiento'},{key:'reservation',label:'Reserva'},{key:'currency',label:'Moneda'},{key:'amount',label:'Comisión'},{key:'paid',label:'Abonado'},{key:'balance',label:'Saldo'},{key:'due_on',label:'Vencimiento'},{key:'status',label:'Estado'}])}>Exportar estado de cuenta</button></div>
   {Object.entries(totals).map(([currency,t])=><p key={currency}><strong>{currency}</strong> · Comisiones emitidas: {money(t.issued,currency)} · Cobrado: {money(t.paid,currency)} · Pendiente: {money(t.balance,currency)}</p>)}
   <h3>Emitir cobro de comisión</h3><p>Solo reservas completadas, con alojamiento vinculado y porcentaje acordado. El importe y la moneda se toman de la reserva al guardar.</p>
   <form className="ro-panel-toolbar" onSubmit={e=>{e.preventDefault();mutate(()=>supabase.from('ota_commission_charges').insert({reservation_id:reservationId,due_on:due}).select());}}>
