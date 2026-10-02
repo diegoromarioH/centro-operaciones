@@ -8,6 +8,7 @@ import { supabase } from './lib/supabaseClient';
 import HotelProfilesPage from './pages/HotelProfilesPage';
 import HotelPanel from './pages/HotelPanel';
 import CommissionCollectionsPage from './pages/CommissionCollectionsPage';
+import FinanceDashboard from './pages/FinanceDashboard';
 import AccountPage from './pages/AccountPage';
 import LoginPage from './auth/LoginPage';
 import Sidebar from './components/Sidebar';
@@ -66,7 +67,7 @@ function LoadingScreen() {
 function CurrentTopbar({ onOpenSidebar, userEmail }) {
   const location = useLocation();
   const table = TABLES.find((t) => t.path === location.pathname);
-  const title = location.pathname === '/alojamiento/host-accounts' ? 'Anfitriones e invitaciones' : location.pathname === '/finanzas/collections' ? 'Comisiones y cobros' : location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de alojamientos' : table ? table.label : 'Inicio';
+  const title = location.pathname === '/finanzas' ? 'Dashboard de finanzas' : location.pathname === '/alojamiento/host-accounts' ? 'Anfitriones e invitaciones' : location.pathname === '/finanzas/collections' ? 'Comisiones y cobros' : location.pathname === '/cuenta' ? 'Mi cuenta' : location.pathname === '/alojamiento/hotel-profiles' ? 'Perfiles de alojamientos' : table ? table.label : 'Inicio';
   const subtitle = table
     ? table.readOnly
       ? 'Registro de solo lectura'
@@ -111,7 +112,7 @@ export default function App() {
             <Route path="/alojamiento/rooms" element={<RoomsPage />} />
             <Route path="/alojamiento/accommodations" element={<AccommodationsPage />} />
             <Route path="/alojamiento/hosts" element={<HostsPage />} />
-            <Route path="/alojamiento/host-accounts" element={<HostAccountsPage />} />
+            <Route path="/alojamiento/host-accounts" element={<Navigate to="/alojamiento/accommodations?section=hosts" replace />} />
             <Route path="/alojamiento/accommodation-hosts" element={<AccommodationHostsPage />} />
             <Route path="/alojamiento/policies" element={<AccommodationPoliciesPage />} />
             <Route path="/movilidad/motorcycles" element={<MotorcyclesPage />} />
@@ -140,6 +141,7 @@ export default function App() {
             <Route path="/config/profiles" element={<ProfilesPage />} />
             <Route path="/config/site-settings" element={<SiteSettingsPage />} />
             <Route path="/config/contact-messages" element={<ContactMessagesPage />} />
+            <Route path="/finanzas" element={<FinanceDashboard />} />
             <Route path="/finanzas/collections" element={<CommissionCollectionsPage />} />
             <Route path="/finanzas/transactions" element={<FinanceTransactionsPage />} />
             <Route path="/finanzas/automation-rules" element={<AutomationRulesPage />} />

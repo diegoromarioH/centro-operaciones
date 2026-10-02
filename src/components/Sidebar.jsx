@@ -8,15 +8,16 @@ import { TABLES, GROUPS } from '../config/tables';
 // TABLES. Se agregan aquí a mano para que sí salgan en el menú, agrupadas
 // igual que el resto.
 const NAV_GROUPS = [
- {label:'Operación',keys:['requests','reservations','accommodations','host-accounts','contact_messages']},
+ {label:'Operación',keys:['requests','reservations','accommodations','contact_messages']},
  {label:'Landing y contenido',keys:['homepage_banners','pages','experiences','tour_guides','destinations','travel_guides','events','blog_posts','blog_categories','seo_entries','media_assets']},
  {label:'Movilidad',keys:['boat_operators','boat_routes','boat_schedules','land_transport_routes','land_transport_schedules','motorcycles']},
- {label:'Finanzas',keys:['commission-collections','finance_transactions']},
+ {label:'Finanzas',keys:['finance-dashboard']},
  {label:'Marketing',keys:['campaigns','ads','newsletters']},
  {label:'Estadísticas',keys:['analytics_events','conversion_funnel_events']},
  {label:'Configuración',keys:['site_settings','profiles','automation_rules','automation_logs','audit_logs']},
 ];
 const EXTRA_PAGES = [
+ {key:'finance-dashboard',label:'Dashboard de finanzas',icon:DollarSign,path:'/finanzas'},
  {key:'commission-collections',label:'Comisiones y cobros',icon:DollarSign,path:'/finanzas/collections'},
  {key:'host-accounts',label:'Anfitriones e invitaciones',icon:KeyRound,path:'/alojamiento/host-accounts'},
 ];

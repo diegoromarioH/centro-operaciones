@@ -6,7 +6,7 @@ import { TABLES, GROUPS } from '../config/tables';
 
 // Tablas más relevantes para las tarjetas grandes de resumen.
 const HIGHLIGHTS = ['requests', 'reservations', 'accommodations', 'homepage_banners'];
-const QUICK_ACTIONS=[['Editar landing','/marketing/homepage-banners'],['Revisar alojamientos','/alojamiento/accommodations'],['Invitar anfitrión','/alojamiento/host-accounts'],['Gestionar solicitudes','/ventas/requests'],['Registrar reservas','/ventas/reservations'],['Cobrar comisiones','/finanzas/collections']];
+const QUICK_ACTIONS=[['Editar landing','/marketing/homepage-banners'],['Revisar alojamientos','/alojamiento/accommodations'],['Invitar anfitrión','/alojamiento/accommodations?section=hosts'],['Gestionar solicitudes','/ventas/requests'],['Registrar reservas','/ventas/reservations'],['Dashboard de finanzas','/finanzas']];
 
 export default function Dashboard() {
   const [errors, setErrors] = useState([]);
