@@ -25,6 +25,7 @@ jobs:
         run: |
           npm install --save-dev --save-exact vite@6.4.3
           npm pkg set 'scripts.dev=vite' 'scripts.preview=vite preview'
+          npm install --save-exact react-router-dom@7.18.4
           npm audit fix
       - name: Check clean install, tests, build and audit
         run: |
