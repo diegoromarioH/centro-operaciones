@@ -48,7 +48,7 @@ const rooms = {
         },
       ],
     },
-    { key: "slug", label: "Slug", type: FIELD.TEXT },
+    { key: "slug", label: "Slug (URL)", type: FIELD.TEXT, required: true },
     { key: "price", label: "Precio por noche", type: FIELD.NUMBER },
     { key: "currency", label: "Moneda", type: FIELD.TEXT },
     { key: "active", label: "Activo (visible en la landing)", type: FIELD.BOOL },

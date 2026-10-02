@@ -11,8 +11,9 @@ const boatSchedules = {
     { column: "route_id", ascending: true },
     { column: "departure_time", ascending: true },
   ],
-  list: ["route_id", "departure_time", "vessel_name", "active"],
+  list: ["operator_id", "route_id", "departure_time", "vessel_name", "active"],
   columns: [
+    { key: "operator_id", label: "Naviera", type: FIELD.FK, table: "boat_operators", display: "name", required: true },
     { key: "route_id", label: "Ruta", type: FIELD.FK, required: true, table: "boat_routes", display: "name" },
     { key: "departure_time", label: "Hora de salida", type: FIELD.TIME, required: true },
     { key: "vessel_name", label: "Nombre del barco", type: FIELD.TEXT },

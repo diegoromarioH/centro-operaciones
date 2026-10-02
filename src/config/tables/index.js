@@ -1,5 +1,6 @@
 import accommodations from './accommodations';
 import hosts from './hosts';
+import rooms from './rooms';
 import accommodationHosts from './accommodationHosts';
 import accommodationPolicies from './accommodationPolicies';
 import motorcycles from './motorcycles';
@@ -35,5 +36,5 @@ import analyticsEvents from './analyticsEvents';
 import conversionFunnelEvents from './conversionFunnelEvents';
 import auditLogs from './auditLogs';
 
-export const TABLES = [accommodations, hosts, accommodationHosts, accommodationPolicies, motorcycles, boatRoutes, boatOperators, boatSchedules, landTransportRoutes, landTransportSchedules, experiences, tourGuides, destinations, travelGuides, events, blogCategories, blogPosts, pages, homepageBanners, benefits, campaigns, ads, newsletters, seoEntries, mediaAssets, requests, reservations, profiles, siteSettings, contactMessages, financeTransactions, automationRules, automationLogs, analyticsEvents, conversionFunnelEvents, auditLogs];
+export const TABLES = [accommodations, rooms, hosts, accommodationHosts, accommodationPolicies, motorcycles, boatRoutes, boatOperators, boatSchedules, landTransportRoutes, landTransportSchedules, experiences, tourGuides, destinations, travelGuides, events, blogCategories, blogPosts, pages, homepageBanners, benefits, campaigns, ads, newsletters, seoEntries, mediaAssets, requests, reservations, profiles, siteSettings, contactMessages, financeTransactions, automationRules, automationLogs, analyticsEvents, conversionFunnelEvents, auditLogs];
 export const GROUPS = [...new Set(TABLES.map((t) => t.group))];

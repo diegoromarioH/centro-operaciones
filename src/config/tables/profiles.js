@@ -14,10 +14,11 @@ const profiles = {
     { key: "id", label: "ID de usuario (auth)", type: FIELD.TEXT, required: true },
     { key: "full_name", label: "Nombre completo", type: FIELD.TEXT },
     { key: "email", label: "Correo", type: FIELD.TEXT },
-    { key: "role", label: "Rol", type: FIELD.SELECT, options: ["super_admin", "admin", "editor", "marketing", "support", "viewer"] },
+    { key: "role", label: "Rol", type: FIELD.SELECT, options: ["super_admin", "admin", "editor", "marketing", "support", "viewer", "host"] },
     { key: "avatar_url", label: "Avatar", type: FIELD.IMAGE, bucket: "media" },
     { key: "active", label: "Activo", type: FIELD.BOOL },
   ],
 };
 
 export default profiles;
+
