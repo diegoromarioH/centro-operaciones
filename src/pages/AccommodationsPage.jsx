@@ -77,6 +77,7 @@ function AccommodationDetail({ accommodation, saving, onBack, onSave, onDelete }
 export default function AccommodationsPage() {
   const [params, setParams] = useSearchParams();
   const hotelId = params.get('hotel');
+  const hubSection = params.get('section') || 'list';
   const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +160,10 @@ export default function AccommodationsPage() {
 
   return (
     <div className="ro-panel">
-      <ListingSubmissions admin onApproved={reload} />
+      <div className="ro-panel-toolbar"><h2>Alojamientos</h2><button className="ro-btn ro-btn-ghost" onClick={()=>setParams({})}>Listado</button><button className="ro-btn ro-btn-ghost" onClick={()=>setParams({section:'hosts'})}>Invitar anfitrión</button><button className="ro-btn ro-btn-ghost" onClick={()=>setParams({section:'review'})}>Pendientes de revisión</button></div>
+      {hubSection === 'hosts' && <HostAccountsPage />}
+      {hubSection === 'review' && <ListingSubmissions admin onApproved={reload} />}
+      {hubSection === 'list' && <>
       <div className="ro-panel-toolbar">
         <div className="ro-search-box">
           <Search size={16} />
@@ -221,6 +225,7 @@ export default function AccommodationsPage() {
         </div>
       )}
 
+      </>}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
